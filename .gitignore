@@ -1,0 +1,10 @@
+# data file
+
+gene.list
+gene.blasttab
+enrich.txt
+
+data
+
+# python
+EnrichConfig.pyc
