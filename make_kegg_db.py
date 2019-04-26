@@ -5,9 +5,16 @@ import delegator
 import EnrichConfig
 
 
+def is_valid_file(file_path):
+    if os.path.exists(file_path):
+        if os.stat(file_path).st_size > 0:
+            return True
+    return False
+
+
 def place_wheat_pep(wheat_pep):
     cp_flag = 0
-    if os.path.exists(EnrichConfig.WHEAT_PEP_DB):
+    if is_valid_file(EnrichConfig.WHEAT_PEP_DB):
         if wheat_pep is not None:
             if click.confirm(
                     '{} file exists, overwrite?'.format(EnrichConfig.WHEAT_PEP_DB)):
@@ -47,7 +54,7 @@ def blast2wheat(pepfile, threads):
     pep_name = os.path.basename(pepfile)
     blastout = os.path.join(EnrichConfig.BLAST_DIR,
                             'wheat.vs.{}.blasttab'.format(pep_name))
-    if os.path.exists(blastout):
+    if is_valid_file(blastout):
         if not click.confirm(
             '{} file exists, overwrite?'.format(blastout)
         ):
@@ -64,7 +71,7 @@ def blast2wheat(pepfile, threads):
 def prepare_sp_files(species, threads):
     organism_db = os.path.join(EnrichConfig.DB_DIR,
                                'organism.db')
-    if not os.path.exists(organism_db):
+    if not is_valid_file(organism_db):
         organism_db_url = EnrichConfig.DB_URL_TEMP.format('organism')
         download_file(organism_db_url, organism_db)
     pep_file = os.path.join(EnrichConfig.PEP_DIR,
@@ -72,7 +79,7 @@ def prepare_sp_files(species, threads):
     db_file = os.path.join(EnrichConfig.DB_DIR,
                            '{}.db'.format(species))
     dl_flat = 1
-    if os.path.exists(pep_file):
+    if is_valid_file(pep_file):
         if not click.confirm(
                 '{} file exists, overwrite?'.format(pep_file)):
             dl_flat = 0
