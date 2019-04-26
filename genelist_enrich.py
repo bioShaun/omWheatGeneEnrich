@@ -3,10 +3,13 @@ import os
 import delegator
 import EnrichConfig
 import re
+import sys
+import pysnooper
 import pandas as pd
 
 
 GENE_PATTERN = re.compile('TraesCS(\w+)1G(\w+)')
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 
 
 def transfer_id(gene_id):
@@ -22,7 +25,7 @@ def transfer_id(gene_id):
 
 def check_gene_id(gene_list, outdir):
     gene_list_df = pd.read_csv(gene_list, header=None,
-                                 names=['gene_id'], sep='\t')
+                               names=['gene_id'], sep='\t')
     gene_list_df.loc[:, 'gene_id'] = gene_list_df.gene_id.map(transfer_id)
     gene_list_out = os.path.join(outdir, 'gene.list')
     gene_list_df.to_csv(gene_list_out, sep='\t',
@@ -35,8 +38,8 @@ def genelist_blasttab(species, gene_df, outdir):
         EnrichConfig.BLAST_DIR,
         'wheat.vs.{}.pep.fasta.blasttab'.format(species))
     blast_df = pd.read_csv(blast_file,
-                             header=None,
-                             index_col=0, sep='\t')
+                           header=None,
+                           index_col=0, sep='\t')
     overlap_gene = [gene_i for gene_i in gene_df.gene_id
                     if gene_i in blast_df.index]
     gene_blast_df = blast_df.loc[overlap_gene]
@@ -104,28 +107,47 @@ def add_term_cat(enrich_file, sp):
     enrich_df.to_csv(enrich_file, sep='\t', index=False)
 
 
+def species_abbr(species):
+    name_file = os.path.join(SCRIPT_DIR, 'wheatdb.organism.txt')
+    name_df = pd.read_csv(name_file, sep='\t', index_col=2,
+                          header=None, names=['id', 'abbr', 'kingdom'])
+    if species in name_df.abbr.values:
+        return species
+    else:
+        if species in name_df.index:
+            return name_df.loc[species].abbr
+        else:
+            sys.exit('species [{}] not found!'.format(species))
+
+
 @click.command()
 @click.option(
     '-s',
     '--species',
-    help='KEGG species abbr',
+    type=click.STRING,
+    help='KEGG species abbr or full name [hsa/Homo sapiens (human)]',
     required=True
 )
 @click.option(
     '-g',
     '--gene_list',
     help='gene list file.',
+    type=click.Path(exists=True),
     required=True
 )
 @click.option(
     '-o',
     '--outdir',
     help='output directory.',
+    type=click.Path(),
     required=True
 )
 def main(species, gene_list, outdir):
+    species = species_abbr(species)
     gene_list = os.path.abspath(gene_list)
     outdir = os.path.abspath(outdir)
+    if not os.path.exists(outdir):
+        os.makedirs(outdir)
     gene_list_df = check_gene_id(
         gene_list, outdir)
     gene_blast_file = genelist_blasttab(
