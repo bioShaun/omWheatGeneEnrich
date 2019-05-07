@@ -1,0 +1,2 @@
+T00041	ath	Arabidopsis thaliana (thale cress)	Eukaryotes;Plants;Eudicots;Mustard family
+T01015	osa	Oryza sativa japonica (Japanese rice)	Eukaryotes;Plants;Monocots;Grass family
