@@ -108,7 +108,7 @@ def add_term_cat(enrich_file, sp):
 
 
 def species_abbr(species):
-    name_file = os.path.join(SCRIPT_DIR, 'wheatdb.organism.txt')
+    name_file = os.path.join(SCRIPT_DIR, 'wheatdb.organism.avail.txt')
     name_df = pd.read_csv(name_file, sep='\t', index_col=2,
                           header=None, names=['id', 'abbr', 'kingdom'])
     if species in name_df.abbr.values:
