@@ -42,10 +42,11 @@ def genelist_blasttab(species, gene_df, outdir):
                            index_col=0, sep='\t')
     overlap_gene = [gene_i for gene_i in gene_df.gene_id
                     if gene_i in blast_df.index]
-    gene_blast_df = blast_df.loc[overlap_gene]
-    gene_blast_file = os.path.join(outdir, 'gene.blasttab')
-    gene_blast_df.to_csv(gene_blast_file, sep='\t', header=None)
-    return gene_blast_file
+    if overlap_gene:
+        gene_blast_df = blast_df.loc[overlap_gene]
+        gene_blast_file = os.path.join(outdir, 'gene.blasttab')
+        gene_blast_df.to_csv(gene_blast_file, sep='\t', header=None)
+        return gene_blast_file
 
 
 def run_kobas(species, gene_blast_file, outdir):
@@ -152,10 +153,11 @@ def main(species, gene_list, outdir):
         gene_list, outdir)
     gene_blast_file = genelist_blasttab(
         species, gene_list_df, outdir)
-    enrich_out = run_kobas(
-        species, gene_blast_file, outdir)
-    format_enrich_file(enrich_out)
-    add_term_cat(enrich_out, species)
+    if gene_blast_file is not None:
+        enrich_out = run_kobas(
+            species, gene_blast_file, outdir)
+        format_enrich_file(enrich_out)
+        add_term_cat(enrich_out, species)
 
 
 if __name__ == '__main__':
