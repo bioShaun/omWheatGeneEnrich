@@ -17,7 +17,8 @@ def place_wheat_pep(wheat_pep):
     if is_valid_file(EnrichConfig.WHEAT_PEP_DB):
         if wheat_pep is not None:
             if click.confirm(
-                    '{} file exists, overwrite?'.format(EnrichConfig.WHEAT_PEP_DB)):
+                    '{} file exists, overwrite?'.format(
+                        EnrichConfig.WHEAT_PEP_DB)):
                 cp_flag = 1
     else:
         cp_flag = 1
@@ -32,7 +33,9 @@ def place_wheat_pep(wheat_pep):
         ))
 
 
-def download_file(url, outfile):
+def download_file(url, outfile, name_flag=None):
+    if name_flag is not None:
+        outfile = '{outfile}.{name_flag}'.format(**locals())
     dl_cmd = 'wget -O {out}.gz "{url}"'.format(
         out=outfile, url=url
     )
@@ -41,6 +44,22 @@ def download_file(url, outfile):
     )
     delegator.run(dl_cmd)
     delegator.run(uncomp_cmd)
+    return outfile
+
+
+def renew_file(url, outfile):
+    tmp_file = download_file(url, outfile, name_flag='tmp')
+    tmp_file_size = os.stat(tmp_file).st_size
+    file_size = os.stat(outfile).st_size
+    if tmp_file_size == file_size:
+        os.system('rm {}'.format(tmp_file))
+        return False
+    else:
+        os.system('mv {tmp} {out}'.format(
+            tmp=tmp_file,
+            out=outfile
+        ))
+        return True
 
 
 def makeblastdb(pepfile):
@@ -54,11 +73,6 @@ def blast2wheat(pepfile, threads):
     pep_name = os.path.basename(pepfile)
     blastout = os.path.join(EnrichConfig.BLAST_DIR,
                             'wheat.vs.{}.blasttab'.format(pep_name))
-    if is_valid_file(blastout):
-        if not click.confirm(
-            '{} file exists, overwrite?'.format(blastout)
-        ):
-            return 1
     blast_cmd = 'blastp -query {wheat} -db {db} -num_threads {threads} -out {out} {default}'.format(
         wheat=EnrichConfig.WHEAT_PEP_DB,
         db=pepfile, threads=threads,
@@ -78,18 +92,16 @@ def prepare_sp_files(species, threads):
                             '{}.pep.fasta'.format(species))
     db_file = os.path.join(EnrichConfig.DB_DIR,
                            '{}.db'.format(species))
+    pep_url = EnrichConfig.PEP_URL_TEMP.format(species)
+    db_url = EnrichConfig.DB_URL_TEMP.format(species)
+    renew_file(db_url, db_file)
     dl_flat = 1
     if is_valid_file(pep_file):
-        if not click.confirm(
-                '{} file exists, overwrite?'.format(pep_file)):
+        if not renew_file(pep_url, pep_file):
             dl_flat = 0
     if dl_flat:
-        pep_url = EnrichConfig.PEP_URL_TEMP.format(species)
-        db_url = EnrichConfig.DB_URL_TEMP.format(species)
-        download_file(pep_url, pep_file)
-        download_file(db_url, db_file)
         makeblastdb(pep_file)
-    blast2wheat(pep_file, threads)
+        blast2wheat(pep_file, threads)
 
 
 @click.command()
