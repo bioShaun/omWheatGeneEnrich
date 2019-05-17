@@ -88,6 +88,9 @@ def format_enrich_file(enrich_out):
                         kegg_out_info.write(eachline)
         kegg_out_info.close()
         os.system('rm %s' % (kegg_tmp_file))
+        return enrich_out
+    else:
+        os.system('rm %s' % (enrich_out))
 
 
 def full_term_id(term_id, sp):
@@ -144,7 +147,7 @@ def species_abbr(species):
     required=True
 )
 def main(species, gene_list, outdir):
-    species = species_abbr(species)
+    species_short = species_abbr(species)
     gene_list = os.path.abspath(gene_list)
     outdir = os.path.abspath(outdir)
     if not os.path.exists(outdir):
@@ -152,12 +155,16 @@ def main(species, gene_list, outdir):
     gene_list_df = check_gene_id(
         gene_list, outdir)
     gene_blast_file = genelist_blasttab(
-        species, gene_list_df, outdir)
-    if gene_blast_file is not None:
-        enrich_out = run_kobas(
-            species, gene_blast_file, outdir)
-        format_enrich_file(enrich_out)
-        add_term_cat(enrich_out, species)
+        species_short, gene_list_df, outdir)
+    if gene_blast_file is None:
+        return ('None of genes is annotated to {}.'.format(species))
+    enrich_out = run_kobas(
+        species_short, gene_blast_file, outdir)
+    formated_enrich_out = format_enrich_file(enrich_out)
+    if formated_enrich_out is None:
+        return ('None of genes is annotated to {} pathway.'.format(species))
+    add_term_cat(enrich_out, species_short)
+    return 'Gene List Enrichment finisehd.'
 
 
 if __name__ == '__main__':
