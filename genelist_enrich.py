@@ -51,9 +51,10 @@ def genelist_blasttab(species, gene_df, outdir):
 
 def run_kobas(species, gene_blast_file, outdir):
     enrich_out = os.path.join(outdir, 'enrich.txt')
-    kobas_cmd = '/usr/bin/python {run_kobas_py} -i {blast} -t blastout:tab -s {sp} -d K/G -o {out}'.format(
+    kobas_cmd = '{py} {run_kobas} -i {blast} -t blastout:tab -s {sp} -d K/G -o {out}'.format(
         blast=gene_blast_file, sp=species,
-        out=enrich_out, run_kobas_py=EnrichConfig.KOBAS_PY
+        out=enrich_out, run_kobas=EnrichConfig.KOBAS_RUN,
+        py=EnrichConfig.KOBAS_PY
     )
     delegator.run(kobas_cmd)
     return enrich_out

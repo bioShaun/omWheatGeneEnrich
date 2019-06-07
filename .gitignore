@@ -7,4 +7,5 @@ enrich.txt
 data
 
 # python
-EnrichConfig.pyc
+*.pyc
+__pycache__
